@@ -49,6 +49,8 @@ Settings save automatically. Ctrl+Shift+F11 stays available for OBS.
 
 [Buy me a coffee](https://buymeacoffee.com/tek95) · [Support from Russia · CloudTips](https://pay.cloudtips.ru/p/b0d7d75d)
 
+More of my stuff: [tek-95.com](https://tek-95.com) · [Instagram](https://instagram.com/tek95dj)
+
 ## Credits
 
 Inspired by [CarbonBounce](https://github.com/giovannosaur/CarbonBounce). Built with [Plugin-SDK](https://github.com/DK22Pac/plugin-sdk).
