@@ -2,6 +2,10 @@
 
 Make Vice City bounce to your music.
 
+<p align="center">
+  <img src="docs/demo.gif" width="420" alt="Vice City bouncing to the beat">
+</p>
+
 Squash and stretch cars, bikes, boats, aircraft and people — including Tommy, passengers and cutscene actors.
 
 ## Install
