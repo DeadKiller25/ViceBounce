@@ -681,7 +681,7 @@ struct ViceBounce {
         GetModuleFileNameA(reinterpret_cast<HMODULE>(&__ImageBase),module,MAX_PATH);
         std::string dir(module);dir=dir.substr(0,dir.find_last_of("\\/")+1);
         iniPath=dir+"ViceBounce.ini";logPath=dir+"ViceBounce.log";
-        Log(std::string("ViceBounce 0.11 startup; ")+plugin::GetGameVersionName());
+        Log(std::string("ViceBounce 0.11.1 startup; ")+plugin::GetGameVersionName());
         if(!CheckSteam()) return;
         LoadConfig();
         savedFrames.reserve(256);

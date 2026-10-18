@@ -126,6 +126,20 @@ def import_track(source, scripts, bpm=None, offset_ms=None, force=False):
         update_ini(scripts / 'ViceBounce.ini', values)
     return dict(**report, cached=cached, unchanged=bool(unchanged), music_file=str(wav), use_beat_map=use_map)
 
+def game_window(handle, process_id):
+    """Accept only the live game window explicitly passed by the ASI."""
+    from ctypes import wintypes as w
+    user = ctypes.WinDLL('user32', use_last_error=True)
+    user.IsWindow.argtypes = [w.HWND]
+    user.GetWindowThreadProcessId.argtypes = [w.HWND, ctypes.POINTER(w.DWORD)]
+    user.ShowWindowAsync.argtypes = [w.HWND, ctypes.c_int]
+    user.SetForegroundWindow.argtypes = [w.HWND]
+    owner = w.DWORD()
+    if not handle or not process_id or not user.IsWindow(handle): return None
+    user.GetWindowThreadProcessId(handle, ctypes.byref(owner))
+    return (user, handle) if owner.value == process_id else None
+
+
 def pick_file():
     from ctypes import wintypes as w
     class OFN(ctypes.Structure):
@@ -137,9 +151,24 @@ def pick_file():
                     ('template', w.LPCWSTR), ('reserved', ctypes.c_void_p), ('reserved2', w.DWORD), ('flagsEx', w.DWORD)]
     filename = ctypes.create_unicode_buffer(32768); request = OFN()
     request.size = ctypes.sizeof(OFN); request.file = ctypes.cast(filename, w.LPWSTR); request.maxFile = len(filename)
-    request.title = 'ViceBounce — выбери свой трек'
+    # An unowned dialog can stay behind an exclusive-fullscreen game. The ASI
+    # grants foreground permission; the init hook raises the Explorer dialog.
+    user = ctypes.WinDLL('user32', use_last_error=True)
+    user.GetParent.argtypes = [w.HWND]; user.GetParent.restype = w.HWND
+    user.SetWindowPos.argtypes = [w.HWND, w.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, w.UINT]
+    user.SetForegroundWindow.argtypes = [w.HWND]
+    hook_type = ctypes.WINFUNCTYPE(ctypes.c_size_t, w.HWND, w.UINT, w.WPARAM, w.LPARAM)
+    @hook_type
+    def on_init(window, message, wp, lp):
+        if message == 0x110:  # WM_INITDIALOG, hook child belongs to Explorer dialog
+            dialog = user.GetParent(window) or window
+            user.SetWindowPos(dialog, w.HWND(-1), 0, 0, 0, 0, 0x3)
+            user.SetForegroundWindow(dialog)
+        return 0
+    request.hook = ctypes.cast(on_init, ctypes.c_void_p)
+    request.title = 'ViceBounce — choose your music'
     request.filter = 'Музыка (MP3, FLAC, WAV, OGG)\0*.mp3;*.flac;*.wav;*.ogg\0Все файлы\0*.*\0\0'
-    request.flags = 0x80000 | 0x1000 | 0x800 | 0x8  # Explorer, existing file/path, no chdir
+    request.flags = 0x80000 | 0x1000 | 0x800 | 0x8 | 0x20  # Explorer, existing file/path, no chdir, hook
     if not ctypes.windll.comdlg32.GetOpenFileNameW(ctypes.byref(request)):
         error = ctypes.windll.comdlg32.CommDlgExtendedError()
         if error: raise OSError('File picker error ' + str(error))
@@ -153,16 +182,21 @@ def main():
     parser.add_argument('--bpm', type=float); parser.add_argument('--offset-ms', type=float)
     parser.add_argument('--force', action='store_true'); parser.add_argument('--quiet', action='store_true')
     parser.add_argument('--if-changed', action='store_true'); parser.add_argument('--status-file', type=Path)
+    parser.add_argument('--game-window', type=int, default=0, help=argparse.SUPPRESS)
+    parser.add_argument('--game-pid', type=int, default=0, help=argparse.SUPPRESS)
     args = parser.parse_args()
     home = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parents[1]
     scripts = args.scripts_dir or home
     if args.bpm is not None and (not np.isfinite(args.bpm) or not 30 <= args.bpm <= 240): parser.error('BPM must be 30..240')
     if args.offset_ms is not None and (not np.isfinite(args.offset_ms) or abs(args.offset_ms) > 3600000): parser.error('Invalid beat offset')
     status = args.status_file or scripts / 'ViceBounceImportStatus.json'
+    game = None
     try:
         source = args.source or args.file
         if not source:
             if args.quiet: raise ValueError('No source file was selected.')
+            game = game_window(args.game_window, args.game_pid)
+            if game: game[0].ShowWindowAsync(game[1], 6)  # SW_MINIMIZE releases fullscreen
             source = pick_file()
             if not source: return 2
         if args.if_changed and args.bpm is None and args.offset_ms is None:
@@ -184,12 +218,16 @@ def main():
                        'Вернись в игру. Если импортёр запущен отдельно, нажми F7.\n'
                        'F9 — поправить совмещение по слышимому удару.')
             if not report['use_beat_map']: message += '\nРитм определён неуверенно: проверь BPM и настрой фазу вручную.'
-            ctypes.windll.user32.MessageBoxW(None, message, 'ViceBounce — музыка готова', 0x40)
+            ctypes.windll.user32.MessageBoxW(None, message, 'ViceBounce — музыка готова', 0x40 | 0x50000)
         return 0
     except Exception as error:
         atomic_bytes(status, json.dumps(dict(ok=False, error=str(error)), indent=2).encode('utf-8'))
         if sys.stderr: traceback.print_exc()
-        if not args.quiet: ctypes.windll.user32.MessageBoxW(None, str(error), 'ViceBounce — не удалось импортировать музыку', 0x10)
+        if not args.quiet: ctypes.windll.user32.MessageBoxW(None, str(error), 'ViceBounce — не удалось импортировать музыку', 0x10 | 0x50000)
         return 1
+    finally:
+        if game and game_window(args.game_window, args.game_pid):
+            game[0].ShowWindowAsync(game[1], 9)  # SW_RESTORE, including Cancel/error
+            game[0].SetForegroundWindow(game[1])
 
 if __name__ == '__main__': raise SystemExit(main())

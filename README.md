@@ -7,8 +7,8 @@ Make Vice City bounce to your music.
 </p>
 
 <p align="center">
-  <a href="https://github.com/tek-95/ViceBounce/releases/latest/download/ViceBounce-0.11.zip">
-    <img src="https://img.shields.io/badge/Download-ViceBounce_0.11_·_Windows_x64-2ea44f?style=for-the-badge" alt="Download ViceBounce 0.11">
+  <a href="https://github.com/tek-95/ViceBounce/releases/latest/download/ViceBounce-0.11.1.zip">
+    <img src="https://img.shields.io/badge/Download-ViceBounce_0.11.1_·_Windows_x64-2ea44f?style=for-the-badge" alt="Download ViceBounce 0.11.1">
   </a>
   <br>
   <sub><a href="https://github.com/tek-95/ViceBounce/releases">all releases</a></sub>
@@ -26,7 +26,7 @@ Other game versions are currently unsupported.
 
 ## Music
 
-Press **F11** and select your own **MP3, FLAC, WAV or OGG**. The importer analyzes the beat and prepares looping playback locally. No Python installation needed. Music is not included or uploaded.
+Press **F11** during gameplay and select your own **MP3, FLAC, WAV or OGG**. The importer analyzes the beat and prepares looping playback locally. No Python installation needed. Music is not included or uploaded. The game minimizes while you choose a file and returns when the importer closes.
 
 Use **F9** to adjust alignment by ear. Automatic beat detection can make mistakes.
 
