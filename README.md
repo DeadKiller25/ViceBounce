@@ -6,6 +6,14 @@ Make Vice City bounce to your music.
   <img src="docs/demo.gif" width="420" alt="Vice City bouncing to the beat">
 </p>
 
+<p align="center">
+  <a href="https://github.com/tek-95/ViceBounce/releases/latest/download/ViceBounce-0.11.zip">
+    <img src="https://img.shields.io/badge/Download-ViceBounce_0.11_·_Windows_x64-2ea44f?style=for-the-badge" alt="Download ViceBounce 0.11">
+  </a>
+  <br>
+  <sub><a href="https://github.com/tek-95/ViceBounce/releases">all releases</a></sub>
+</p>
+
 Squash and stretch cars, bikes, boats, aircraft and people — including Tommy, passengers and cutscene actors.
 
 ## Install
