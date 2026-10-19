@@ -3,7 +3,11 @@
 Make Vice City bounce to your music.
 
 <p align="center">
-  <img src="docs/demo.gif" width="420" alt="Vice City bouncing to the beat">
+  <a href="https://www.instagram.com/p/DepL4Fptbyn/">
+    <img src="docs/demo.gif" width="420" alt="Vice City bouncing to the beat">
+  </a>
+  <br>
+  <a href="https://www.instagram.com/p/DepL4Fptbyn/">▶ Sound on: watch the full clip on Instagram</a>
 </p>
 
 <p align="center">
