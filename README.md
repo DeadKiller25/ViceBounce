@@ -16,6 +16,13 @@ Make Vice City bounce to your music.
   </a>
   <br>
   <sub><a href="https://github.com/tek-95/ViceBounce/releases">all releases</a></sub>
+  <br><br>
+  <a href="https://buymeacoffee.com/tek95">
+    <img src="https://img.shields.io/badge/Buy_me_a_coffee-FFDD00?style=flat&logo=buymeacoffee&logoColor=000000" alt="Buy me a coffee">
+  </a>
+  <a href="https://pay.cloudtips.ru/p/b0d7d75d">
+    <img src="https://img.shields.io/badge/%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B0%D1%82%D1%8C_%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B0-CloudTips-1E88E5?style=flat" alt="Поддержать автора через CloudTips">
+  </a>
 </p>
 
 Squash and stretch cars, bikes, boats, aircraft and people — including Tommy, passengers and cutscene actors.
