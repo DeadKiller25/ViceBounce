@@ -1,0 +1,85 @@
+name: Windows build
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2025-vs2026
+    env:
+      PLUGIN_SDK_DIR: ${{ github.workspace }}\work\deps\plugin-sdk
+
+    steps:
+      - name: Check out ViceBounce
+        uses: actions/checkout@v4
+
+      - name: Check out Plugin-SDK
+        uses: actions/checkout@v4
+        with:
+          repository: DK22Pac/plugin-sdk
+          ref: 15f15b60bbf74c106e1b496ff92c98764abf4605
+          path: work/deps/plugin-sdk
+          submodules: recursive
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate and build Plugin-SDK
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Push-Location $env:PLUGIN_SDK_DIR
+          try {
+            & '.\tools\premake\premake5.exe' vs2026 "--file=$env:PLUGIN_SDK_DIR\tools\premake\premake5.lua"
+            if ($LASTEXITCODE -ne 0) { throw 'Plugin-SDK project generation failed' }
+            & msbuild 'plugin.slnx' /property:Configuration=Release '/property:Platform=Mixed Platforms' /target:plugin_vc /m /verbosity:minimal /nologo
+            if ($LASTEXITCODE -ne 0) { throw 'Plugin-SDK build failed' }
+          } finally {
+            Pop-Location
+          }
+
+      - name: Build ViceBounce ASI
+        shell: pwsh
+        run: |
+          & '.\Build.ps1'
+          if ($LASTEXITCODE -ne 0) { throw 'ViceBounce build failed' }
+
+      - name: Test and build music importer
+        shell: pwsh
+        working-directory: importer
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m pip install -r requirements-build.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Importer dependency installation failed' }
+          python -m unittest -v test_importer
+          if ($LASTEXITCODE -ne 0) { throw 'Importer tests failed' }
+          python -m PyInstaller --noconfirm --onefile --windowed --noupx --name ViceBounceMusic --collect-data _soundfile_data --collect-binaries _soundfile_data --hidden-import _cffi_backend --exclude-module tkinter import_music.py
+          if ($LASTEXITCODE -ne 0) { throw 'Music importer build failed' }
+
+      - name: Package downloadable ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $package = Join-Path $env:RUNNER_TEMP 'ViceBounce-package'
+          $scripts = Join-Path $package 'scripts'
+          New-Item -ItemType Directory -Force -Path $scripts, 'dist' | Out-Null
+          Copy-Item -LiteralPath @('bin\ViceBounce.asi', 'importer\dist\ViceBounceMusic.exe', 'ViceBounce.ini') -Destination $scripts
+          Copy-Item -LiteralPath @('README.md', 'LICENSE.txt', 'Plugin-SDK-LICENSE.txt') -Destination $package
+          Copy-Item -Recurse -LiteralPath 'ThirdParty' -Destination (Join-Path $package 'ThirdParty')
+          Compress-Archive -Path (Join-Path $package '*') -DestinationPath 'dist\ViceBounce.zip' -Force
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ViceBounce-${{ github.sha }}
+          path: dist/ViceBounce.zip
+          if-no-files-found: error
