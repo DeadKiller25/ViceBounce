@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2025-vs2026
+    runs-on: windows-2022
     env:
       PLUGIN_SDK_DIR: ${{ github.workspace }}\work\deps\plugin-sdk
 
@@ -39,9 +39,9 @@ jobs:
           $ErrorActionPreference = 'Stop'
           Push-Location $env:PLUGIN_SDK_DIR
           try {
-            & '.\tools\premake\premake5.exe' vs2026 "--file=$env:PLUGIN_SDK_DIR\tools\premake\premake5.lua"
+            & '.\tools\premake\premake5.exe' vs2022 "--file=$env:PLUGIN_SDK_DIR\tools\premake\premake5.lua"
             if ($LASTEXITCODE -ne 0) { throw 'Plugin-SDK project generation failed' }
-            & msbuild 'plugin.slnx' /property:Configuration=Release '/property:Platform=Mixed Platforms' /target:plugin_vc /m /verbosity:minimal /nologo
+            & msbuild 'plugin.sln' /property:Configuration=Release '/property:Platform=Mixed Platforms' /target:plugin_vc /m /verbosity:minimal /nologo
             if ($LASTEXITCODE -ne 0) { throw 'Plugin-SDK build failed' }
           } finally {
             Pop-Location
